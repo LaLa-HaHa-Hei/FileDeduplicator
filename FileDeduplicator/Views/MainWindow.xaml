@@ -1,0 +1,157 @@
+﻿<Window x:Class="FileDeduplicator.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FileDeduplicator.Views"
+        xmlns:vm="clr-namespace:FileDeduplicator.ViewModels"
+        xmlns:models="clr-namespace:FileDeduplicator.Models"
+        mc:Ignorable="d"
+        Title="文件去重「代码见三」" Height="450" Width="800"
+        d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
+        AllowDrop="True" Drop="Window_Drop">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 菜单栏 -->
+        <!--<Menu Grid.Row="0">
+        </Menu>-->
+
+        <!--工具栏-->
+        <ToolBar Grid.Row="1">
+            <Button Content="选中重复文件" Command="{Binding SelectDuplicateFilesCommand}"/>
+            <Button Content="删除选中文件到回收站" Command="{Binding DeleteSelectedFilesToRecycleBinCommand}"/>
+            <Button Content="从列表移除选中文件" Command="{Binding RemoveSelectedFilesFromListCommand}"/>
+        </ToolBar>
+
+        <!--配置-->
+        <DockPanel Grid.Row="2" LastChildFill="False">
+            <TextBlock Text="哈希类型：" Height="20" Margin="10,0,0,0"/>
+            <ComboBox Width="Auto" ItemsSource="{Binding HashTypes}" SelectedValue="{Binding HashType}" />
+            <TextBlock Text="同时计算文件数：" Height="20" Margin="10,0,0,0"/>
+            <ComboBox Width="Auto" ItemsSource="{Binding ConcurrentFileCountOptions}" SelectedValue="{Binding ConcurrentFileCount}" />
+        </DockPanel>
+
+        <!-- 主内容的双列 -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <!-- 处理中的文件列表 -->
+                <ListView x:Name="ProcessingFilesListView" Grid.Row="0" ItemsSource="{Binding ProcessingFiles}">
+                    <ListView.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="CancelProcessingFileMenuItem" Header="取消处理" Click="CancelProcessingFileMenuItem_Click"/>
+                        </ContextMenu>
+                    </ListView.ContextMenu>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="处理中的文件" 
+                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                DisplayMemberBinding="{Binding Name}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <!-- 可拖动的分隔条 -->
+                <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch"/>
+
+                <!--未处理的文件列表-->
+                <ListView x:Name="PendingFilesListView"  Grid.Row="2" ItemsSource="{Binding PendingFiles}">
+                    <ListView.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="RemovePendingFileMenuItem" Header="移除" Click="RemovePendingFileMenuItem_Click"/>
+                        </ContextMenu>
+                    </ListView.ContextMenu>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="未处理的文件" 
+                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                DisplayMemberBinding="{Binding Name}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+
+            <!-- 可拖动的分隔条 -->
+            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch"/>
+
+            <!-- 已处理文件列表 -->
+            <ListView x:Name="CompletedFilesListView" Grid.Column="2" ItemsSource="{Binding CompletedFiles}">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <!--禁止获得焦点后，右键无法获得选择的元素-->
+                        <Setter Property="Focusable" Value="false"/>
+                        <Setter Property="Background" Value="{Binding BackgroundColor}" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{Binding BackgroundColor}" />
+                                <Setter Property="BorderBrush" Value="Black" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ContextMenu>
+                    <ContextMenu>  
+                        <MenuItem Header="选中重复文件" Command="{Binding SelectDuplicateFilesCommand}"/>  
+                        <MenuItem Header="删除选中文件到回收站" Command="{Binding DeleteSelectedFilesToRecycleBinCommand}"/>  
+                        <MenuItem Header="从列表移除选中文件" Command="{Binding RemoveSelectedFilesFromListCommand}"/>  
+                    </ContextMenu>  
+                </ListView.ContextMenu>
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="勾选" Width="Auto">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected}"
+                                              HorizontalAlignment="Center">
+                                    </CheckBox>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="文件名" Width="200" DisplayMemberBinding="{Binding Name}"/>
+                        <GridViewColumn Header="哈希类型" Width="auto" DisplayMemberBinding="{Binding HashType}"/>
+                        <GridViewColumn Header="哈希值" Width="auto" DisplayMemberBinding="{Binding HashValue}"/>
+                        <GridViewColumn Header="处理时间" DisplayMemberBinding="{Binding ProcessingTime, StringFormat='{}{0:%h}:{0:%m}:{0:%s\\.fff}'}" Width="Auto"/>
+                        <GridViewColumn Header="文件路径" Width="auto" DisplayMemberBinding="{Binding Path}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+
+        <!-- 状态栏 -->
+        <StatusBar Grid.Row="4">
+            <StatusBarItem>
+                <TextBlock MinWidth="90" 
+                           Text="{Binding PendingFilesCount, StringFormat=待处理：{0} 个}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock MinWidth="90" 
+                           Text="{Binding CompletedFilesCount, StringFormat=已处理：{0} 个}"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock>
+                    GitHub：
+                    <Hyperlink NavigateUri="https://github.com/LaLa-HaHa-Hei/FileDeduplicator" Click="Hyperlink_Click">
+                        https://github.com/LaLa-HaHa-Hei/FileDeduplicator
+                    </Hyperlink>
+                </TextBlock>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>
