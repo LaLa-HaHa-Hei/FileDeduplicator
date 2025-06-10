@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="文件去重「代码见三」" Height="450" Width="800"
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
-        AllowDrop="True" Drop="Window_Drop">
+        AllowDrop="True" Drop="Window_Drop" Icon="/Resources/Icon.ico">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -80,7 +80,7 @@
                     </ListView.ContextMenu>
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="未处理的文件" 
+                            <GridViewColumn Header="待处理的文件" 
                                 Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListView}}"
                                 DisplayMemberBinding="{Binding Name}"/>
                         </GridView>
@@ -139,6 +139,10 @@
             <StatusBarItem>
                 <TextBlock MinWidth="90" 
                            Text="{Binding PendingFilesCount, StringFormat=待处理：{0} 个}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock MinWidth="90" 
+                           Text="{Binding ProcessingFilesCount, StringFormat=处理中：{0} 个}"/>
             </StatusBarItem>
             <StatusBarItem>
                 <TextBlock MinWidth="90" 

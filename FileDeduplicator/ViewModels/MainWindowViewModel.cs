@@ -35,7 +35,7 @@ namespace FileDeduplicator.ViewModels
         [ObservableProperty]
         private HashType _hashType = HashType.MD5; // 哈希类型
 
-        private BackgroundColorServices _backgroundColorServices = new(); // 背景颜色
+        private readonly BackgroundColorServices _backgroundColorServices = new(); // 背景颜色
 
         public MainWindowViewModel()
         {
